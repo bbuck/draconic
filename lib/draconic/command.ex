@@ -1,13 +1,13 @@
 defmodule Draconic.Command do
+  alias __MODULE__
   alias Draconic.UnnamedCommandError
 
-  @type flags() :: keyword()
-  @type args() :: [String.t()]
-  @type command_spec() :: map()
-  @type status_code() :: integer() | nil
+  @type t() :: %Command{}
 
-  @callback run(flags(), args()) :: status_code()
-  @callback command_spec() :: command_spec()
+  #@callback run(flags(), args()) :: status_code()
+  #@callback command_spec() :: command_spec()
+
+  defstruct module: nil, name: nil, description: "", short: "", flags: %{}, subcommands: %{}
 
   defmacro __using__(_opts) do
     quote do
@@ -19,7 +19,6 @@ defmodule Draconic.Command do
       @description ""
       @short_description ""
       @flags []
-      @aliases []
       @subcommands []
 
       @before_compile Draconic.Command
@@ -29,18 +28,6 @@ defmodule Draconic.Command do
   defmacro name(name) do
     quote do
       @name unquote(name)
-    end
-  end
-
-  defmacro flag(name, type) do
-    quote do
-      @flags [{unquote(name), unquote(type)} | @flags]
-    end
-  end
-
-  defmacro alias_flag(alias, flag) do
-    quote do
-      @aliases [{unquote(alias), unquote(flag)} | @aliases]
     end
   end
 
@@ -70,13 +57,11 @@ defmodule Draconic.Command do
             message: "The command defined by #{__MODULE__} did not define a name."
         end
 
-        %{
+        %Command{
           module: __MODULE__,
           name: @name,
           description: @description,
           short: @short_description,
-          flags: Enum.reverse(@flags),
-          aliases: Enum.reverse(@aliases),
           subcommands: subcommands()
         }
       end
