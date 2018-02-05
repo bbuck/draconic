@@ -9,10 +9,23 @@ defmodule Draconic.Flag do
   @type flag_kind() :: :boolean | :string | :integer | :float | :count
 
   @typedoc """
+  Represents the type of the _data_ associated to a flag. For example a flag like
+  `:num` may have a `flag_kind()` of `:integer`, but it's actual value (given by
+  the user) may be `10` (in the case of `--num 10`).
+  """
+  @type flag_value_kind() :: boolean() | String.t() | integer() | float() | nil
+
+  @typedoc """
   A simple type used in the spec of `t()` to define that a type can be a kind or a list
   with a kind and the symbol :keep in it.
   """
   @type flag_type() :: flag_kind() | [flag_kind() | :keep]
+
+  @typedoc """
+  Similar to the difference between `flag_kind()` and `flag_value_kind()` where this type
+  is referring to the value provided by the user (or the default value of the flag).
+  """
+  @type flag_value_type() :: flag_value_kind() | [flag_value_kind()]
 
   @typedoc """
   A structure to represent an application flag, which has a name, an optional
@@ -32,6 +45,20 @@ defmodule Draconic.Flag do
   application and the second value is simply the description.
   """
   @type string_parts() :: {String.t(), String.t()}
+
+  @typedoc """
+  A map that maps a name (should be an atom) to a `%Draconic.Flag{}` struct defining
+  the flag. This flag definition is used when building a map from a set of flags
+  provided by the user when invoking the application.
+  """
+  @type flag_definition() :: %{required(atom()) => t()}
+
+  @typedoc """
+  A map mapping a flag name (should be an atom) to a value that represents the information
+  the user provided for that flag (or it's default value). All defined flags should appear
+  in a flag map, regardless of whether it was explicitly passed.
+  """
+  @type flag_map() :: %{atom() => flag_value_type()}
 
   @doc """
   Generates a tuple pair where the first value is the string flag names stylized as
@@ -59,17 +86,29 @@ defmodule Draconic.Flag do
 
   """
   @spec string_parts(t()) :: string_parts()
-  def string_parts(%Flag{name: name, alias: flag_alias, description: desc}) do
-    string_parts(name, flag_alias, desc)
+  def string_parts(%Flag{name: name, type: type, alias: flag_alias, description: desc}) do
+    string_parts(name, flag_alias, desc, type)
   end
 
-  @spec string_parts(atom(), atom(), String.t()) :: string_parts()
-  defp string_parts(name, nil, desc) do
+  @spec string_parts(atom(), nil, String.t(), :boolean) :: string_parts()
+  defp string_parts(name, nil, desc, :boolean) do
+    {"--[no-]" <> to_string(name), desc}
+  end
+
+  @spec string_parts(atom(), atom(), String.t(), flag_type()) :: string_parts()
+  defp string_parts(name, nil, desc, _type) do
     {"--" <> to_string(name), desc}
   end
 
-  @spec string_parts(atom(), atom(), String.t()) :: string_parts()
-  defp string_parts(name, flag_alias, desc) do
+  @spec string_parts(atom(), atom(), String.t(), :boolean) :: string_parts()
+  defp string_parts(name, flag_alias, desc, :boolean) do
+    long = "--[no-]" <> to_string(name)
+    short = "-" <> to_string(flag_alias)
+    {long <> ", " <> short, desc}
+  end
+
+  @spec string_parts(atom(), atom(), String.t(), flag_type()) :: string_parts()
+  defp string_parts(name, flag_alias, desc, _type) do
     long = "--" <> to_string(name)
     short = "-" <> to_string(flag_alias)
     {long <> ", " <> short, desc}
@@ -123,4 +162,50 @@ defmodule Draconic.Flag do
   defp option_parser_parts(%Flag{name: name, alias: flag_alias, type: type}) do
     {{name, type}, {flag_alias, name}}
   end
+
+  @doc """
+  """
+  @spec to_map(flag_definition(), keyword()) :: flag_map()
+  def to_map(flag_definitions, passed_flags) do
+    built_map = 
+      passed_flags
+      |> Enum.reduce(%{}, &insert_into_flag_map/2)
+      |> Enum.map(&reverse_flag_value_lists/1)
+      |> Enum.into(%{})
+
+    flag_definitions
+    |> Enum.map(find_missing_flags_from(built_map))
+    |> Enum.filter(fn x -> x != nil end)
+    |> Enum.into(built_map)
+  end
+
+  @spec insert_into_flag_map({atom(), flag_value_type()}, flag_map()) :: flag_map()
+  defp insert_into_flag_map({flag_key, flag_val}, flag_map) do
+    case Map.fetch(flag_map, flag_key) do
+      {:ok, value_list} when is_list(value_list) ->
+        Map.put(flag_map, flag_key, [flag_val | value_list])
+
+      {:ok, value} ->
+        Map.put(flag_map, flag_key, [flag_val, value])
+
+      :error ->
+        Map.put(flag_map, flag_key, flag_val)
+    end
+  end
+
+  @spec find_missing_flags_from(flag_map()) :: ({atom(), t()} -> nil | {atom(), flag_value_type()})
+  defp find_missing_flags_from(map) do
+    fn {key, flag_def} ->
+      case Map.fetch(map, key) do
+        {:ok, _} -> nil
+        :error -> {key, flag_def.default}
+      end
+    end
+  end
+
+  @spec reverse_flag_value_lists({atom(), flag_value_type()}) :: {atom(), flag_value_type()}
+  defp reverse_flag_value_lists({key, value}) when is_list(value), do: {key, Enum.reverse(value)}
+  
+  @spec reverse_flag_value_lists({atom(), flag_value_type()}) :: {atom(), flag_value_type()}
+  defp reverse_flag_value_lists(entry), do: entry
 end
