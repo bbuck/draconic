@@ -32,12 +32,12 @@ defmodule Draconic.Flag do
   alias (shorthand), a description, a type and an optional default.
   """
   @type t() :: %Flag{
-    name: atom(), 
-    alias: atom(), 
-    description: String.t(), 
-    type: flag_type(),
-    default: term()
-  }
+          name: atom(),
+          alias: atom(),
+          description: String.t(),
+          type: flag_type(),
+          default: term()
+        }
 
   @typedoc """
   A 2-tuple of string values where the first value is the flag representation
@@ -120,7 +120,7 @@ defmodule Draconic.Flag do
   the provided input from the user.
 
   ## Parameters
-  
+
    - flags: A list of `%Draconic.Flag{}` structs that will be used to generate the
      keyword list.
 
@@ -129,7 +129,7 @@ defmodule Draconic.Flag do
   Returns a keyword list, containing :strict and :aliases.
 
   ## Examples
-  
+
       iex> Draconic.Flag.flags_for_option_parser([%Draconic.Flag{name: :verbose, type: :boolean}, %Draconic.Flag{name: :input, alias: :i, type: :string}])
       [strict: [verbose: :boolean, input: :string], aliases: [i: :input]]
 
@@ -140,6 +140,7 @@ defmodule Draconic.Flag do
       flags
       |> Enum.map(&option_parser_parts/1)
       |> Enum.reduce({[], []}, &reduce_option_parser_data/2)
+
     [strict: Enum.reverse(switches), aliases: Enum.reverse(aliases)]
   end
 
@@ -148,7 +149,10 @@ defmodule Draconic.Flag do
     {[switch | switches], aliases}
   end
 
-  @spec reduce_option_parser_data({{atom(), flag_type()}, {atom(), atom()}}, {keyword(), keyword()}) :: {keyword(), keyword()}
+  @spec reduce_option_parser_data(
+          {{atom(), flag_type()}, {atom(), atom()}},
+          {keyword(), keyword()}
+        ) :: {keyword(), keyword()}
   defp reduce_option_parser_data({switch, alias_data}, {switches, aliases}) do
     {[switch | switches], [alias_data | aliases]}
   end
@@ -167,7 +171,7 @@ defmodule Draconic.Flag do
   """
   @spec to_map(flag_definition(), keyword()) :: flag_map()
   def to_map(flag_definitions, passed_flags) do
-    built_map = 
+    built_map =
       passed_flags
       |> Enum.reduce(%{}, &insert_into_flag_map/2)
       |> Enum.map(&reverse_flag_value_lists/1)
@@ -193,7 +197,8 @@ defmodule Draconic.Flag do
     end
   end
 
-  @spec find_missing_flags_from(flag_map()) :: ({atom(), t()} -> nil | {atom(), flag_value_type()})
+  @spec find_missing_flags_from(flag_map()) ::
+          ({atom(), t()} -> nil | {atom(), flag_value_type()})
   defp find_missing_flags_from(map) do
     fn {key, flag_def} ->
       case Map.fetch(map, key) do
@@ -205,7 +210,7 @@ defmodule Draconic.Flag do
 
   @spec reverse_flag_value_lists({atom(), flag_value_type()}) :: {atom(), flag_value_type()}
   defp reverse_flag_value_lists({key, value}) when is_list(value), do: {key, Enum.reverse(value)}
-  
+
   @spec reverse_flag_value_lists({atom(), flag_value_type()}) :: {atom(), flag_value_type()}
   defp reverse_flag_value_lists(entry), do: entry
 end

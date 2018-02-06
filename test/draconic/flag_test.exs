@@ -31,7 +31,11 @@ defmodule Draconic.FlagTest do
         %Flag{name: :verbose, type: :boolean, alias: :v},
         %Flag{name: :input, type: :string}
       ]
-      assert Flag.to_options(flags) == [strict: [verbose: :boolean, input: :string], aliases: [v: :verbose]]
+
+      assert Flag.to_options(flags) == [
+               strict: [verbose: :boolean, input: :string],
+               aliases: [v: :verbose]
+             ]
     end
   end
 
@@ -61,29 +65,29 @@ defmodule Draconic.FlagTest do
 
       {:ok, flag_defs: flag_defs}
     end
-    
+
     test "generates the proper map", %{flag_defs: flag_defs} do
-      assert Flag.to_map(flag_defs, [verbose: :true, name: "Peter", num: 10]) == %{
-        verbose: true,
-        name: "Peter",
-        num: 10
-      }
+      assert Flag.to_map(flag_defs, verbose: true, name: "Peter", num: 10) == %{
+               verbose: true,
+               name: "Peter",
+               num: 10
+             }
     end
 
     test "handles filling in default values", %{flag_defs: flag_defs} do
       assert Flag.to_map(flag_defs, []) == %{
-        verbose: false,
-        name: nil,
-        num: 0
-      }
+               verbose: false,
+               name: nil,
+               num: 0
+             }
     end
 
     test "handles multiple values for a flag", %{flag_defs: flag_defs} do
-      assert Flag.to_map(flag_defs, [num: 10, num: 15]) == %{
-        verbose: false,
-        name: nil,
-        num: [10, 15]
-      }
+      assert Flag.to_map(flag_defs, num: 10, num: 15) == %{
+               verbose: false,
+               name: nil,
+               num: [10, 15]
+             }
     end
   end
 end
