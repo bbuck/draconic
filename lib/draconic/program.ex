@@ -3,12 +3,6 @@ defmodule Draconic.Program do
   alias Draconic.Command
   alias Draconic.Flag
 
-  @type options() :: %{
-          help: module(),
-          help_flag: {atom(), atom()},
-          help_command: boolean()
-        }
-
   @type t() :: %Program{
           module: module(),
           name: String.t(),
