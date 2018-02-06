@@ -12,7 +12,8 @@ locals_without_parens = [
   float_flag: 2,
   float_flag: 3,
   flag: 3,
-  flag: 4
+  flag: 4,
+  command: 1
 ]
 
 

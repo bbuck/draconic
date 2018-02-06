@@ -1,33 +1,43 @@
 defmodule Draconic.Program do
+  alias __MODULE__
+  alias Draconic.Command
+  alias Draconic.Flag
+
   @type options() :: %{
-          flag_type: :keywords | :map,
           help: module(),
           help_flag: {atom(), atom()},
           help_command: boolean()
         }
 
-  @type t() :: %{
-          commands: [Draconic.Command.t()],
-          flags: keyword(),
-          options: options()
+  @type t() :: %Program{
+          module: module(),
+          name: String.t(),
+          description: String.t(),
+          commands: [Command.t()],
+          flags: Flag.flag_definition(),
+          help_renderer: module(),
+          help_command: true
         }
 
-  defmacro __using__(opts \\ nil) do
-    main = opts == :with_main
+  defstruct module: nil,
+            name: "",
+            commands: [],
+            description: "",
+            flags: %{},
+            default_command: "help",
+            help_renderer: Draconic.BasicHelp,
+            help_command: true
 
+  defmacro __using__(_) do
     quote do
       import Draconic.Program
 
-      @define_main unquote(main)
-
+      @name "PROGRAM"
       @commands []
-      @flags []
-      @aliases []
-      @options %{
-        flag_type: :keywords,
-        help: Draconic.BasicHelp,
-        help_flag: {:help, :h}
-      }
+      @description ""
+      @flags %{}
+      @help_renderer Draconic.BasicHelp
+      @help_flag_name {:help, :h}
       @help_command true
       @default_command "help"
 
@@ -35,7 +45,19 @@ defmodule Draconic.Program do
     end
   end
 
-  defmacro default(cmd) do
+  defmacro name(name) do
+    quote do
+      @name unquote(name)
+    end
+  end
+
+  defmacro desc(description) do
+    quote do
+      @description unquote(description)
+    end
+  end
+
+  defmacro default_command(cmd) do
     quote do
       @default_command unquote(cmd)
     end
@@ -47,39 +69,68 @@ defmodule Draconic.Program do
     end
   end
 
-  defmacro flag(name, type) do
+  @doc """
+  Creates a string flag with the given name, description and default value associated
+  the currently defined program.
+  """
+  @spec string_flag(Flag.flag_name(), String.t(), Flag.flag_type()) :: Macro.t()
+  defmacro string_flag(name, description, default) do
     quote do
-      @flags [{unquote(name), unquote(type)} | @flags]
+      flag(unquote(name), :string, unquote(description), unquote(default))
     end
   end
 
-  defmacro alias_flag(alias, flag) do
+  defmacro int_flag(name, description, default) do
     quote do
-      @aliases [{unquote(alias), unquote(flag)} | @aliases]
+      flag(unquote(name), :integer, unquote(description), unquote(default))
     end
   end
 
-  defmacro flag_type(type) do
+  defmacro float_flag(name, description, default) do
     quote do
-      @options Map.put(@options, :flag_type, unquote(type))
+      flag(unquote(name), :float, unquote(description), unquote(default))
+    end
+  end
+
+  defmacro bool_flag(name, description, default) do
+    quote do
+      flag(unquote(name), :boolean, unquote(description), unquote(default))
+    end
+  end
+
+  defmacro flag(name, type, description, default \\ nil) do
+    {fname, falias} =
+      case name do
+        {n, a} -> {n, a}
+        x -> {x, nil}
+      end
+
+    quote do
+      @flags Map.put(@flags, unquote(fname), %Flag{
+               name: unquote(fname),
+               alias: unquote(falias),
+               type: unquote(type),
+               description: unquote(description),
+               default: unquote(default)
+             })
     end
   end
 
   defmacro help_renderer(mod) do
     quote do
-      @options Map.put(@options, :help, unquote(mod))
+      @help_renderer unquote(mod)
     end
   end
 
-  defmacro help_flag(name, alias) do
+  defmacro help_flag(name) do
     quote do
-      @options Map.put(@options, :help_flag, {unquote(name), unquote(alias)})
+      @help_flag_name unquote(name)
     end
   end
 
   defmacro provide_help_command(state) do
     quote do
-      @help_command state
+      @help_command unquote(state)
     end
   end
 
@@ -91,109 +142,48 @@ defmodule Draconic.Program do
         |> Enum.into(%{})
       end
 
-      def flags do
-        {help, _} = @options.help_flag
-        [{help, :boolean} | @flags]
-      end
-
-      def aliases do
-        {help, alias} = @options.help_flag
-        [{alias, help} | @aliases]
-      end
-
-      def options, do: @options
-      def default, do: @default_command
-
-      if @define_main do
-        def main(args) do
-          run(args)
+      def help_flag_name do
+        case @help_flag_name do
+          {name, _} -> name
+          x -> x
         end
       end
 
+      def flags do
+        {help_name, help_alias} = @help_flag_name
+
+        help = %Flag{
+          name: help_name,
+          alias: help_alias,
+          type: :boolean,
+          description: "Print this page, providing useful information about the program.",
+          default: false
+        }
+
+        Map.put(@flags, help_name, help)
+      end
+
+      def default_command, do: @default_command
+
+      def help_renderer, do: @help_renderer
+
+      def help_command(), do: @help_command
+
       def program_spec do
-        %{
+        %Program{
+          name: @name,
+          description: @description,
           module: __MODULE__,
           commands: commands(),
-          options: options(),
           flags: flags(),
-          aliases: aliases(),
-          default: default()
+          default_command: default_command(),
+          help_renderer: help_renderer(),
+          help_command: help_command()
         }
       end
 
-      def run(args) do
-        result =
-          case OptionParser.parse(args, option_parser_config(flags(), aliases())) do
-            {flags, [], invalid} ->
-              init_execution(commands(), {flags, [@default_command], invalid})
-
-            parse_result ->
-              init_execution(commands(), parse_result)
-          end
-
-        case result do
-          nil -> 0
-          x when is_integer(x) -> x
-          _ -> -1
-        end
-      end
-
-      defp init_execution(cmds, {flags, args, invalid} = arg_data) do
-        IO.puts(inspect(flags))
-
-        if flags[:help] do
-          run_help(flags, args, invalid)
-        else
-          execute_command(cmds, arg_data)
-        end
-      end
-
-      defp execute_command(cmds, {_flags, [], _invalid}), do: {:error, :nocommand}
-
-      defp execute_command(cmds, {flags, ["help" | args], invalid}) when @help_command do
-        run_help(flags, args, invalid)
-      end
-
-      defp execute_command(cmds, {flags, [cmd | args], invalid}) do
-        case Map.fetch(cmds, cmd) do
-          {:ok, spec} ->
-            {sub_flags, _args, invalid} =
-              OptionParser.parse(invalid, option_parser_config(spec.flags, spec.aliases))
-
-            flags = List.flatten([flags, sub_flags])
-
-            case execute_command(spec.subcommands, {flags, args, invalid}) do
-              {:error, :nocommand} ->
-                spec.module.run(flags_for_run(flags), args)
-
-              x ->
-                x
-            end
-
-          :error ->
-            {:error, :nocommand}
-        end
-      end
-
-      defp run_help(flags, args, invalid) do
-        help = @options.help.render(program_spec(), flags_for_run(flags), args, invalid)
-        IO.puts(help)
-        nil
-      end
-
-      defp option_parser_config(flags, aliases) do
-        [
-          switches: flags,
-          aliases: aliases
-        ]
-      end
-
-      defp flags_for_run(flags) do
-        if @options.flag_type == :map do
-          Draconic.Flags.to_map(flags)
-        else
-          flags
-        end
+      def main(args) do
+        Draconic.Executor.execute(program_spec(), args)
       end
     end
   end

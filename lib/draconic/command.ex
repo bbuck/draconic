@@ -23,7 +23,12 @@ defmodule Draconic.Command do
           subcommands: command_map()
         }
 
-  defstruct module: nil, name: nil, description: "", short_description: "", flags: %{}, subcommands: %{}
+  defstruct module: nil,
+            name: nil,
+            description: "",
+            short_description: "",
+            flags: %{},
+            subcommands: %{}
 
   # TODO: replace [String.t()] with argv() and define status_code() in Draconic.Program
   @callback run(Flag.flag_map(), [String.t()]) :: status_code()
