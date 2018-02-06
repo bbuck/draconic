@@ -80,19 +80,19 @@ defmodule Draconic.Program do
     end
   end
 
-  defmacro int_flag(name, description, default) do
+  defmacro int_flag(name, description, default \\ nil) do
     quote do
       flag(unquote(name), :integer, unquote(description), unquote(default))
     end
   end
 
-  defmacro float_flag(name, description, default) do
+  defmacro float_flag(name, description, default \\ nil) do
     quote do
       flag(unquote(name), :float, unquote(description), unquote(default))
     end
   end
 
-  defmacro bool_flag(name, description, default) do
+  defmacro bool_flag(name, description, default \\ nil) do
     quote do
       flag(unquote(name), :boolean, unquote(description), unquote(default))
     end
