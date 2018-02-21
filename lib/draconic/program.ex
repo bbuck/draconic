@@ -55,6 +55,12 @@ defmodule Draconic.Program do
   alias Draconic.Command
   alias Draconic.Flag
 
+  @typedoc "A list of string values passed into the program."
+  @type argv() :: [String.t()]
+
+  @typedoc "The return value from CLI, `0` (or `nil`) or a non-zero error code."
+  @type status_code() :: integer() || nil
+
   @typedoc """
   Contains the definition of a program, from things like it's description to a 
   map of commands available to be executed and even what default command should
@@ -73,6 +79,7 @@ defmodule Draconic.Program do
           help_command: true
         }
 
+  @doc false
   defstruct module: nil,
             name: "",
             commands: [],
@@ -83,6 +90,7 @@ defmodule Draconic.Program do
             help_renderer: Draconic.BasicHelp,
             help_command: true
 
+  @doc false
   defmacro __using__(_) do
     quote do
       import Draconic.Program
@@ -289,6 +297,8 @@ defmodule Draconic.Program do
         }
       end
 
+      # TODO: docs
+      @spec main(argv()) :: status_code()
       def main(args) do
         Draconic.Executor.execute(program_spec(), args)
       end

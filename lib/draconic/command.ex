@@ -3,8 +3,6 @@ defmodule Draconic.Command do
   alias Draconic.UnnamedCommandError
   alias Draconic.Flag
 
-  @type status_code() :: integer() | nil
-
   @typedoc """
   Defines a map of names to commands, used for command lookup.
   """
@@ -30,8 +28,7 @@ defmodule Draconic.Command do
             flags: %{},
             subcommands: %{}
 
-  # TODO: replace [String.t()] with argv() and define status_code() in Draconic.Program
-  @callback run(Flag.flag_map(), [String.t()]) :: status_code()
+  @callback run(Flag.flag_map(), Program.argv()) :: Program.status_code()
   @callback command_spec() :: t()
 
   defmacro __using__(_opts) do
