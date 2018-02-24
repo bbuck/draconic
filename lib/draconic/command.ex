@@ -1,5 +1,6 @@
 defmodule Draconic.Command do
   alias __MODULE__
+  alias Draconic.Program
   alias Draconic.UnnamedCommandError
   alias Draconic.Flag
 

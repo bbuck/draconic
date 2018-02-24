@@ -59,7 +59,7 @@ defmodule Draconic.Program do
   @type argv() :: [String.t()]
 
   @typedoc "The return value from CLI, `0` (or `nil`) or a non-zero error code."
-  @type status_code() :: integer() || nil
+  @type status_code() :: integer() | nil
 
   @typedoc """
   Contains the definition of a program, from things like it's description to a 
@@ -97,7 +97,7 @@ defmodule Draconic.Program do
 
       @name "PROGRAM"
       @commands []
-      @usage
+      @usage nil 
       @description ""
       @flags %{}
       @help_renderer Draconic.BasicHelp
@@ -250,12 +250,14 @@ defmodule Draconic.Program do
 
   defmacro __before_compile__(_env) do
     quote do
+      @doc false
       defp commands do
         @commands
         |> Enum.map(fn mod -> {mod.name(), mod.command_spec()} end)
         |> Enum.into(%{})
       end
 
+      @doc false
       def help_flag_name do
         case @help_flag_name do
           {name, _} -> name
@@ -263,6 +265,7 @@ defmodule Draconic.Program do
         end
       end
 
+      @doc false
       def flags do
         {help_name, help_alias} = @help_flag_name
 
@@ -277,18 +280,30 @@ defmodule Draconic.Program do
         Map.put(@flags, help_name, help)
       end
 
+      @doc false
       def default_command, do: @default_command
 
+      @doc false
       def help_renderer, do: @help_renderer
 
+      @doc false
       def help_command, do: @help_command
+
+      @doc false
+      def usage, do: @usage
+      
+      @doc false
+      def name, do: @name
+
+      @doc false
+      def description, do: @description
 
       def program_spec do
         %Program{
-          name: @name,
-          description: @description,
-          usage: @usage,
           module: __MODULE__,
+          name: name(),
+          description: description(),
+          usage: usage(),
           commands: commands(),
           flags: flags(),
           default_command: default_command(),
@@ -297,8 +312,8 @@ defmodule Draconic.Program do
         }
       end
 
-      # TODO: docs
-      @spec main(argv()) :: status_code()
+      @doc "Entry point for the program, use this as the target of escripts `main_module`." 
+      @spec main(Draconic.Program.argv()) :: Draconic.Program.status_code()
       def main(args) do
         Draconic.Executor.execute(program_spec(), args)
       end
