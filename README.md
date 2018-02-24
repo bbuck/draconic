@@ -1,6 +1,6 @@
 # Draconic
 
-[![https://img.shields.io/badge/docs-hex.pm-blue.svg]](https://hexdocs.pm/draconic/api-reference.html)
+[![docs](https://img.shields.io/badge/docs-hex.pm-blue.svg)](https://hexdocs.pm/draconic/api-reference.html)
 
 Draconic is a DSL for building command line programs. It allows you to define your
 CLI via simplistic macro functions that get compiled into simple modules used at 
