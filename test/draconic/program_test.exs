@@ -39,6 +39,7 @@ defmodule Draconic.ProgramTest do
       assert TestProgram.program_spec() == %Program{
                module: TestProgram,
                name: "test",
+               version: "1.0",
                description: "a program description",
                help_command: true,
                flags: %{

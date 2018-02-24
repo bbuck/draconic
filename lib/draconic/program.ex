@@ -82,6 +82,7 @@ defmodule Draconic.Program do
   @doc false
   defstruct module: nil,
             name: "",
+            version: "",
             commands: [],
             usage: nil,
             description: "",
@@ -104,6 +105,7 @@ defmodule Draconic.Program do
       @help_flag_name {:help, :h}
       @help_command true
       @default_command "help"
+      @version "1.0"
 
       @before_compile Draconic.Program
     end
@@ -141,6 +143,14 @@ defmodule Draconic.Program do
   defmacro default_command(cmd) do
     quote do
       @default_command unquote(cmd)
+    end
+  end
+
+  @doc "Define a version for the program."
+  @spec version(String.t()) :: Macro.t()
+  defmacro version(vsn) do
+    quote do
+      @version unquote(vsn)
     end
   end
 
@@ -308,12 +318,17 @@ defmodule Draconic.Program do
       @spec description() :: String.t()
       def description, do: @description
 
+      @doc "Return the version of the CLI."
+      @spec version() :: String.t()
+      def version, do: @version
+
       @doc "Return a detailed set of information defining the program."
       @spec program_spec() :: Draconic.Program.t()
       def program_spec do
         %Program{
           module: __MODULE__,
           name: name(),
+          version: version(),
           description: description(),
           usage: usage(),
           commands: commands(),
