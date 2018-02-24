@@ -248,16 +248,19 @@ defmodule Draconic.Program do
     end
   end
 
+  @doc false
   defmacro __before_compile__(_env) do
     quote do
-      @doc false
-      defp commands do
+      @doc "Return a list of command specs associated with this program."
+      @spec commands() :: [Draconic.Command.t()]
+      def commands do
         @commands
         |> Enum.map(fn mod -> {mod.name(), mod.command_spec()} end)
         |> Enum.into(%{})
       end
 
-      @doc false
+      @doc "Return the long name of the help flag."
+      @spec help_flag_name() :: atom()
       def help_flag_name do
         case @help_flag_name do
           {name, _} -> name
@@ -265,7 +268,8 @@ defmodule Draconic.Program do
         end
       end
 
-      @doc false
+      @doc "Return a list of flags associated with this program."
+      @spec flags() :: [Draconic.Flag.t()]
       def flags do
         {help_name, help_alias} = @help_flag_name
 
@@ -280,24 +284,32 @@ defmodule Draconic.Program do
         Map.put(@flags, help_name, help)
       end
 
-      @doc false
+      @doc "Return the name of teh default command to run if no other command is given."
+      @spec default_command() :: String.t()
       def default_command, do: @default_command
 
-      @doc false
+      @doc "Return the module that will render the help page for this commaand."
+      @spec help_renderer() :: module()
       def help_renderer, do: @help_renderer
 
-      @doc false
+      @doc "Return the name of the help command for this program."
+      @spec help_command() :: String.t()
       def help_command, do: @help_command
 
-      @doc false
+      @doc "Return the usage of the program, used for help rendering purposes."
+      @spec usage() :: String.t()
       def usage, do: @usage
       
-      @doc false
+      @doc "Return the name of the program."
+      @spec name() :: String.t()
       def name, do: @name
 
-      @doc false
+      @doc "Return the long description of the program."
+      @spec description() :: String.t()
       def description, do: @description
 
+      @doc "Return a detailed set of information defining the program."
+      @spec program_spec() :: Draconic.Program.t()
       def program_spec do
         %Program{
           module: __MODULE__,

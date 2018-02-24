@@ -57,7 +57,6 @@ Then just execute your program!
 csv_parser list --input example.csv
 ```
 
-
 ## Installation
 
 Draconic can be installed from Hex by adding `draconic` to your list of 
@@ -70,3 +69,9 @@ def deps do
   ]
 end
 ```
+
+## Roadmap
+
+ - [ ] Options for `command` macro
+   - [ ] Override command name
+   - [ ] Override flag defaults
