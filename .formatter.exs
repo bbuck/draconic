@@ -13,7 +13,9 @@ locals_without_parens = [
   float_flag: 3,
   flag: 3,
   flag: 4,
-  command: 1
+  command: 1,
+  version: 1,
+  usage: 1,
 ]
 
 
