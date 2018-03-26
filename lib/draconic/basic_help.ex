@@ -1,31 +1,37 @@
 defmodule Draconic.BasicHelp do
+  alias Draconic.Program
+  alias Draconic.Command
+
   @behaviour Draconic.HelpRenderer
 
+  @typep spec_t :: Program.t() | Command.t()
+
   def render(program, _flags, args, _invalid) do
-    render(program, args)
+    inspect(get_spec(program, args))
   end
 
-  defp render(spec, []) do
-    inspect(spec)
-  end
+  @spec get_spec(spec_t(), Program.argv()) :: spec_t()
+  defp get_spec(spec, []), do: spec
 
-  defp render(%{commands: cmds} = spec, [cmd | args]) do
+  @spec get_spec(Program.t(), Program.argv()) :: spec_t()
+  defp get_spec(%Program{commands: cmds} = spec, [cmd | args]) do
     case Map.fetch(cmds, cmd) do
       {:ok, cmd_spec} ->
-        render(cmd_spec, args)
+        get_spec(cmd_spec, args)
 
       :error ->
-        inspect(spec)
+        spec
     end
   end
 
-  defp render(%{subcommands: cmds} = spec, [cmd | args]) do
-    case Map.fetch(cmds, cmd) do
+  @spec get_spec(Command.t(), Program.argv()) :: spec_t()
+  defp get_spec(%Command{subcommands: sub_cmds} = spec, [cmd | args]) do
+    case Map.fetch(sub_cmds, cmd) do
       {:ok, cmd_spec} ->
-        render(cmd_spec, args)
+        get_spec(cmd_spec, args)
 
       :error ->
-        inspect(spec)
+        spec
     end
   end
 end

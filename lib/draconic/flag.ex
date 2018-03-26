@@ -54,7 +54,7 @@ defmodule Draconic.Flag do
 
   @typedoc """
   A 2-tuple of string values where the first value is the flag representation
-  as you would expect users to pass them to them to the command line 
+  as you would expect users to pass them to them to the command line
   application and the second value is simply the description.
   """
   @type string_parts() :: {String.t(), String.t()}
@@ -143,7 +143,7 @@ defmodule Draconic.Flag do
 
   ## Examples
 
-      iex> Draconic.Flag.flags_for_option_parser([%Draconic.Flag{name: :verbose, type: :boolean}, %Draconic.Flag{name: :input, alias: :i, type: :string}])
+      iex> Draconic.Flag.to_options([%Draconic.Flag{name: :verbose, type: :boolean}, %Draconic.Flag{name: :input, alias: :i, type: :string}])
       [strict: [verbose: :boolean, input: :string], aliases: [i: :input]]
 
   """

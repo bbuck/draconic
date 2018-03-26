@@ -1,13 +1,13 @@
 defmodule Draconic.Program do
   @moduledoc """
   Draconic is a DSL for building command line programs. It allows you to define your
-  CLI via simplistic macro functions that get compiled into simple modules used at 
+  CLI via simplistic macro functions that get compiled into simple modules used at
   run time to execute the desired command users enter. It's built on top of the
   built in `OptionParser` so it's flag definitions are a remnant of those supported
-  by `OptionParser`. Although the goal was to unify aspects of an option flag as 
+  by `OptionParser`. Although the goal was to unify aspects of an option flag as
   singular unit.
 
-  With Draconic commands are defined as their own modules, and as behaviors you 
+  With Draconic commands are defined as their own modules, and as behaviors you
   just implement the run method that will be invoked if the command is given.
   Associating these commands to a program is a simple call to a macro passing in the
   module defining the command.
@@ -28,7 +28,7 @@ defmodule Draconic.Program do
         alias CSVParser.CLI.Commands
 
         name "awesome"
-        
+
         command Commands.Mapper
         command Commands.Lister
       end
@@ -62,7 +62,7 @@ defmodule Draconic.Program do
   @type status_code() :: integer() | nil
 
   @typedoc """
-  Contains the definition of a program, from things like it's description to a 
+  Contains the definition of a program, from things like it's description to a
   map of commands available to be executed and even what default command should
   be executed if none is given. This struct is not only used to execute a program
   but it's also provided to a HelpRenderer which can then render help pages however
@@ -98,7 +98,7 @@ defmodule Draconic.Program do
 
       @name "PROGRAM"
       @commands []
-      @usage nil 
+      @usage nil
       @description ""
       @flags %{}
       @help_renderer Draconic.BasicHelp
@@ -309,7 +309,7 @@ defmodule Draconic.Program do
       @doc "Return the usage of the program, used for help rendering purposes."
       @spec usage() :: String.t()
       def usage, do: @usage
-      
+
       @doc "Return the name of the program."
       @spec name() :: String.t()
       def name, do: @name
@@ -339,7 +339,7 @@ defmodule Draconic.Program do
         }
       end
 
-      @doc "Entry point for the program, use this as the target of escripts `main_module`." 
+      @doc "Entry point for the program, use this as the target of escripts `main_module`."
       @spec main(Draconic.Program.argv()) :: Draconic.Program.status_code()
       def main(args) do
         Draconic.Executor.execute(program_spec(), args)
